@@ -6,19 +6,19 @@
 
 # Tenta obter o ID do projeto automaticamente do gcloud, senão use um valor padrão.
 PROJECT_ID   ?= $(shell gcloud config get-value project)
-BUCKET_NAME := seu-bucket-aqui # <-- Altere esta linha
-REGION := us-central1
+BUCKET_NAME  := seu-bucket-aqui
+REGION       := us-central1
 
 # --- Nomes e Caminhos (geralmente não precisam ser alterados) ---
 REPO_NAME        := poc-flex-repo
 IMAGE_NAME       := poc-flex-template
 TEMPLATE_NAME    := poc-uppercase-template
 IMAGE_URI        := $(REGION)-docker.pkg.dev/$(PROJECT_ID)/$(REPO_NAME)/$(IMAGE_NAME):latest
-TEMPLATE_PATH    := gs://$(BUCKET_NAME)/templates/$(TEMPLATE_NAME).json
+TEMPLATE_PATH    := gs://$(BUCKET_NAME)/$(IMAGE_NAME)/dataflow/templates/$(TEMPLATE_NAME).json
 
 # --- Parâmetros para Execução (edite conforme necessário) ---
-INPUT_FILE       := gs://$(BUCKET_NAME)/input/input.txt
-OUTPUT_PREFIX    := gs://$(BUCKET_NAME)/output/result
+INPUT_FILE       := gs://$(BUCKET_NAME)/$(IMAGE_NAME)/dataflow/input/input.txt
+OUTPUT_PREFIX    := gs://$(BUCKET_NAME)/$(IMAGE_NAME)/dataflow/output/result
 JOB_NAME_PREFIX  := poc-uppercase
 
 # Gera um nome de job único com a data/hora atual
@@ -69,8 +69,21 @@ deploy: build-image build-template ## Constrói a imagem e o template em um só 
 	@echo "\n✅ Deploy do template concluído com sucesso!"
 	@echo "   Template disponível em: $(TEMPLATE_PATH)"
 
+
+.PHONY: upload-input
+upload-input: ## Cria um arquivo de entrada de exemplo e o envia para o GCS
+	@echo "--> Criando arquivo de entrada local de exemplo..."
+	@echo "linha de exemplo um" > input.txt.local
+	@echo "linha de exemplo dois" >> input.txt.local
+	@echo "MAIS UMA LINHA" >> input.txt.local
+	@echo "--> Enviando arquivo para: $(INPUT_FILE)"
+	@gsutil cp input.txt.local $(INPUT_FILE)
+	@echo "--> Limpando arquivo local."
+	@rm -f input.txt.local
+
+
 .PHONY: run
-run: ## Executa um job do Dataflow usando o template
+run: upload-input ## Executa um job do Dataflow usando o template
 	@echo "--> Executando o job de Dataflow: $(JOB_NAME)"
 	@gcloud dataflow flex-template run $(JOB_NAME) \
 		--template-file-gcs-location=$(TEMPLATE_PATH) \
@@ -78,10 +91,10 @@ run: ## Executa um job do Dataflow usando o template
 		--parameters input=$(INPUT_FILE) \
 		--parameters output=$(OUTPUT_PREFIX)
 
-.PHONY: verify
-verify: ## 
-	@echo ">>> Verificando o arquivo de saída..."
-	gsutil cat $(OUTPUT_FILE_GCS_PREFIX)-00000-of-00001
+.PHONY: view-result
+view-result: ## Mostra o conteúdo dos arquivos de saída no GCS
+	@echo "--> Exibindo resultado de: $(OUTPUT_PREFIX)*"
+	@gsutil cat $(OUTPUT_PREFIX)*
 
 .PHONY: clean
 clean: ## Remove arquivos gerados localmente
