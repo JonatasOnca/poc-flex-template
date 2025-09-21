@@ -1,0 +1,22 @@
+{
+    "name": "PoC-Flex-Template-Uppercase",
+    "description": "Um template flexível para converter o texto de um arquivo para maiúsculas.",
+    "sdkInfo": {
+        "language": "PYTHON"
+    },
+    "image": "GCS_IMAGE_URI_PLACEHOLDER",
+    "parameters": [
+        {
+            "name": "input",
+            "label": "Arquivo de Entrada no GCS",
+            "helpText": "Caminho do arquivo de texto para processar. Ex: gs://seu-bucket/input.txt",
+            "isGcsReadFile": true
+        },
+        {
+            "name": "output",
+            "label": "Prefixo do Arquivo de Saída no GCS",
+            "helpText": "Prefixo do caminho para os arquivos de saída. Ex: gs://seu-bucket/output/result",
+            "isGcsWriteFile": true
+        }
+    ]
+}
