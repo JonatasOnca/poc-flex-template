@@ -91,6 +91,14 @@ run: upload-input ## Executa um job do Dataflow usando o template
 		--parameters input=$(INPUT_FILE) \
 		--parameters output=$(OUTPUT_PREFIX)
 
+.PHONY: run-local
+run-local:
+	@echo "--> Executando o LOCAL: $(JOB_NAME)"
+	@python3 -m main \
+		--runner DirectRunner \
+		--input ./input/input.txt \
+		--output ./output/output.txt
+
 .PHONY: view-result
 view-result: ## Mostra o conteúdo dos arquivos de saída no GCS
 	@echo "--> Exibindo resultado de: $(OUTPUT_PREFIX)*"
